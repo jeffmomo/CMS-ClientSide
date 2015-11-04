@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Jumbotron Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            padding-bottom: 2rem;
+        }
+        .jumbotron
+        {
+            padding:0;
+        }
+    </style>
+
+    <style type="text/css">
+        html, body { height: 100%; margin: 0; padding: 0; }
+        #map { height: 500px; width: 100% }
+    </style>
+
+</head>
+<body>
+
+
+<nav class="navbar navbar-inverse navbar-static-top">
+    <a class="navbar-brand" href="#">SEVEN ELEVEN CMS SYSTEM</a>
+    <ul class="nav nav-pills">
+        <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">About</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Contact</a>
+        </li>
+    </ul>
+</nav>
+
+<!-- Main jumbotron for a primary marketing message or call to action -->
+<div class="jumbotron">
+    <div class="">
+        <div id="map"></div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Example row of columns -->
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Add Hazard</h2>
+            <form>
+                <div class="form-group">
+                    <label for="haz-desc">Hazard Description</label>
+                    <input type="text" class="form-control" id="haz-desc" placeholder="Description">
+                </div>
+
+                <div class="form-group">
+                    <label for="haz-loc">Hazard Location</label>
+                    <input type="text" class="form-control" id="haz-loc" placeholder="Location">
+                </div>
+
+                <div class="form-group">
+                    <label for="haz-dt">Hazard Date Time</label>
+                    <input type="datetime" class="form-control" id="haz-dt" placeholder="dd-mm-yyyy hh:mm">
+                </div>
+
+                <div class="form-group">
+                    <label for="haz-dt">Hazard Status</label>
+                    <input type="text" class="form-control" id="haz-stat" placeholder="Status">
+                </div>
+
+                <button type="button" onclick="submitHaz()" class="btn btn-danger">Submit</button>
+            </form>
+        </div>
+        <div class="col-md-4">
+            <h2>Add Incident</h2>
+            <form>
+                <div class="form-group">
+                    <label for="inc-desc">Incident Description</label>
+                    <input type="text" class="form-control" id="inc-desc" placeholder="Description">
+                </div>
+
+                <div class="form-group">
+                    <label for="inc-loc">Incident Location</label>
+                    <input type="text" class="form-control" id="inc-loc" placeholder="Location">
+                </div>
+
+                <div class="form-group">
+                    <label for="inc-dt">Incident Date Time</label>
+                    <input type="datetime" class="form-control" id="inc-dt" placeholder="dd-mm-yyyy hh:mm">
+                </div>
+
+                <div class="form-group">
+                    <label for="inc-dt">Incident Status</label>
+                    <input type="text" class="form-control" id="inc-stat" placeholder="Status">
+                </div>
+
+                <button type="button" onclick="submitInc()" class="btn btn-danger">Submit</button>
+            </form>
+        </div>
+        <div class="col-md-4">
+            <h2>Heading</h2>
+            <p>Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
+            <p><a class="btn btn-secondary" href="#" onclick="testGetIncidents()" role="button">View details &raquo;</a></p>
+        </div>
+    </div>
+
+    <hr>
+
+    <footer>
+        <p>&copy; Company 2014</p>
+    </footer>
+</div> <!-- /container -->
+
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="dist/js/bootstrap.min.js"></script>
+
+<!--Maps Javascript-->
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBMdfoJ_HCiWn8wnh-WJUsc0z4gCZKfXqI&callback=initMap">
+</script>
+<script>
+    function SendSocket()
+    {
+
+
+        var sock = new WebSocket("ws://localhost:8887");
+
+        //this._socket = sock;
+        this.ready = false;
+        this.onready = function(){};
+
+        var self = this;
+        sock.onopen = function()
+        {
+            self.ready = true;
+            self.onready();
+        };
+
+        this.send = function(tag, data)
+        {
+            if(!tag)
+                alert("SendSocket.send requires a tag");
+
+            sock.send(JSON.stringify({tag:tag, data: data}));
+        };
+
+        return this;
+    }
+
+    function RecvSocket(tag)
+    {
+        if(!tag)
+            alert("Tag not provided to recv socket");
+
+        var sock = new WebSocket("ws://localhost:8887");
+        var id = Math.random().toString();
+
+        sock.id = id;
+        sock.onopen = function()
+        {
+            sock.send(JSON.stringify({tag: tag, identifier: id, privileges: "read"}));
+        };
+
+        return sock;
+    }
+</script>
+
+<script type="text/javascript">
+
+
+
+    var locArray = [];
+    var zoneArray = [];
+
+    var map;
+    var geocoder;
+    function initMap() {
+        geocoder = new google.maps.Geocoder();
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: -34.397, lng: 150.644},
+            zoom: 8
+        });
+    }
+
+    function nr()
+    {
+        return Math.random() - Math.random();
+    }
+
+    if (!String.prototype.format) {
+        String.prototype.format = function() {
+            var args = arguments;
+            return this.replace(/{(\d+)}/g, function(match, number) {
+                return typeof args[number] != 'undefined'
+                        ? args[number]
+                        : match
+                        ;
+            });
+        };
+    }
+
+    function getAddressCoords(address, callback) {
+        geocoder.geocode({'address': address}, function (results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                callback(results[0].geometry.location);
+            } else {
+                alert("Geocode was not successful for the following reason: " + status);
+            }
+        });
+    }
+
+
+
+    //  new RecvSocket("add_location").onmessage = function(msg)
+    //  {
+    //    var data = JSON.parse(msg.data);
+    //
+    //    var point = new google.maps.LatLng(data.lat, data.long);
+    //    var marker = new google.maps.Marker({
+    //      position: point,
+    //      title:"Hello World!",
+    //      map: map
+    //    });
+    //
+    //    locArray.push(marker);
+    //  };
+    //  new RecvSocket("add_zone").onmessage = function(msg)
+    //  {
+    //    var data = JSON.parse(msg.data);
+    //
+    //    var cityCircle = new google.maps.Circle({
+    //      strokeColor: '#FF0000',
+    //      strokeOpacity: 0.8,
+    //      strokeWeight: 2,
+    //      fillColor: '#FF0000',
+    //      fillOpacity: 0.35,
+    //      map: map,
+    //      center: new google.maps.LatLng(data.lat, data.long),
+    //      radius: data.radius|0
+    //    });
+    //    zoneArray.push(cityCircle);
+    //  };
+
+    new RecvSocket("client_create_zone").onmessage = function(msg)
+    {
+        //alert(msg.data);
+        var data = JSON.parse(msg.data);
+
+        getAddressCoords(data.location, function(coords)
+        {
+            var cityCircle = new google.maps.Circle({
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35,
+                map: map,
+                center: coords,
+                radius: 5000
+            });
+            zoneArray.push(cityCircle);
+
+            var contentString = "<h1>" + data.description + "</h1>" + "<p>Status: " + data.status + "</p>";
+
+            var infowindow = new google.maps.InfoWindow({
+                content: contentString,
+                position: coords
+            });
+
+            cityCircle.addListener('click', function() {
+                infowindow.open(map);
+            });
+        });
+    };
+
+
+    new RecvSocket("client_create_marker").onmessage = function(msg)
+    {
+        //alert(msg.data);
+        var data = JSON.parse(msg.data);
+
+        getAddressCoords(data.location, function(coords)
+        {
+            var marker = new google.maps.Marker({
+              position: coords,
+              map: map
+            });
+            zoneArray.push(marker);
+
+            var contentString = "<h1>" + data.description + "</h1>" + "<p>Status: " + data.status + "</p>";
+
+            var infowindow = new google.maps.InfoWindow({
+                content: contentString,
+                position: coords
+            });
+
+            marker.addListener('click', function() {
+                infowindow.open(map);
+            });
+        });
+    };
+
+    // Handles targeted messages
+    var targetedSocket = new RecvSocket("targeted");
+
+    targetedSocket.onmessage = function(msg)
+    {
+        var data = JSON.parse(msg.data);
+        alert(data.apiType + ": " + msg.data);
+
+
+        switch (data.apiType)
+        {
+            case "client_all_incidents":
+                alert(data.allIncidents);
+                break;
+            default:
+                alert("Invalid targeted message received");
+        }
+    };
+
+
+    var sendSocket = new SendSocket();
+
+    function testGetIncidents()
+    {
+        if(sendSocket.ready)
+        {
+            sendSocket.send("srv_getall_incidents", targetedSocket.id);
+            console.log("seding hit test");
+        }
+        else
+        {
+            alert("Send socket not ready");
+        }
+    }
+
+    function submitHaz()
+    {
+        var description = document.getElementById("haz-desc").value;
+        var location = document.getElementById("haz-loc").value;
+        var datetime = document.getElementById("haz-dt").value;
+        var status = document.getElementById("haz-stat").value;
+
+        sendSocket.send("srv_add_hazard", JSON.stringify({description: description, location: location, datetime: datetime, status: status}));
+    }
+
+    function submitInc()
+    {
+        var description = document.getElementById("inc-desc").value;
+        var location = document.getElementById("inc-loc").value;
+        var datetime = document.getElementById("inc-dt").value;
+        var status = document.getElementById("inc-stat").value;
+
+        sendSocket.send("srv_add_incident", JSON.stringify({description: description, location: location, datetime: datetime, status: status}));
+    }
+
+</script>
+
+</body>
+</html>
