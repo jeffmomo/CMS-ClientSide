@@ -27,7 +27,7 @@
 
     <style type="text/css">
         html, body { height: 100%; margin: 0; padding: 0; }
-        #map { height: 500px; width: 100% }
+        #map { height: 1000px; width: 100% }
     </style>
 
 </head>
@@ -50,58 +50,6 @@
 <div class="container">
     <!-- Example row of columns -->
     <div class="row">
-        <div class="col-md-6">
-            <h2>Add Hazard</h2>
-            <form>
-                <div class="form-group">
-                    <label for="haz-desc">Hazard Description</label>
-                    <input type="text" class="form-control" id="haz-desc" placeholder="Description">
-                </div>
-
-                <div class="form-group">
-                    <label for="haz-loc">Hazard Location</label>
-                    <input type="text" class="form-control" id="haz-loc" placeholder="Location">
-                </div>
-
-                <div class="form-group">
-                    <label for="haz-dt">Hazard Date Time</label>
-                    <input type="datetime" class="form-control" id="haz-dt" placeholder="dd-mm-yyyy hh:mm">
-                </div>
-
-                <div class="form-group">
-                    <label for="haz-dt">Hazard Status</label>
-                    <input type="text" class="form-control" id="haz-stat" placeholder="Status">
-                </div>
-
-                <button type="button" onclick="submitHaz()" class="btn btn-danger">Submit</button>
-            </form>
-        </div>
-        <div class="col-md-6">
-            <h2>Add Incident</h2>
-            <form>
-                <div class="form-group">
-                    <label for="inc-desc">Incident Description</label>
-                    <input type="text" class="form-control" id="inc-desc" placeholder="Description">
-                </div>
-
-                <div class="form-group">
-                    <label for="inc-loc">Incident Location</label>
-                    <input type="text" class="form-control" id="inc-loc" placeholder="Location">
-                </div>
-
-                <div class="form-group">
-                    <label for="inc-dt">Incident Date Time</label>
-                    <input type="datetime" class="form-control" id="inc-dt" placeholder="dd-mm-yyyy hh:mm">
-                </div>
-
-                <div class="form-group">
-                    <label for="inc-dt">Incident Status</label>
-                    <input type="text" class="form-control" id="inc-stat" placeholder="Status">
-                </div>
-
-                <button type="button" onclick="submitInc()" class="btn btn-danger">Submit</button>
-            </form>
-        </div>
     </div>
 
     <hr>
@@ -291,14 +239,6 @@
 
     };
 
-    new RecvSocket("client_create_marker").onmessage = function(msg)
-    {
-        //alert(msg.data);
-        var data = JSON.parse(msg.data);
-        putMarker(data.description, data.location, data.status);
-    };
-
-
 
     // Handles targeted messages
     var targetedSocket = new RecvSocket("targeted");
@@ -309,9 +249,7 @@
         switch (data.apiType)
         {
             case "client_all_incidents":
-                var incidents = JSON.parse(data.allIncidents)[0];
-                for(var i = 0; i < incidents.length; i++)
-                    putMarker(incidents[i][1], incidents[i][2], incidents[i][4])
+
                 break;
             case "client_all_hazards":
                 var hazards = JSON.parse(data.allHazards)[0];
