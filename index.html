@@ -231,8 +231,9 @@
         });
     }
 
-    function putZone(description, location, status)
+    function putZone(description, location, status, hash)
     {
+
         getAddressCoords(location, function(coords)
         {
             var cityCircle = new google.maps.Circle({
@@ -245,22 +246,24 @@
                 center: coords,
                 radius: 5000
             });
-            zoneArray.push(cityCircle);
+            cityCircle.contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>" + "<p><a onclick='resolveHaz(" + hash + ")'>Update and Resolve</a></p>";
 
-            var contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>";
-
-            var infowindow = new google.maps.InfoWindow({
-                content: contentString,
+            var iw = new google.maps.InfoWindow({
+                content: cityCircle.contentString,
                 position: coords
             });
+            iw.parent = cityCircle;
+            cityCircle.infoWindow = iw;
+
+            zoneArray[hash] = (cityCircle);
 
             cityCircle.addListener('click', function() {
-                infowindow.open(map);
+                iw.open(map);
             });
         });
     }
 
-    function putMarker(description, location, status)
+    function putMarker(description, location, status, hash)
     {
         getAddressCoords(location, function(coords)
         {
@@ -268,17 +271,20 @@
                 position: coords,
                 map: map
             });
-            zoneArray.push(marker);
-
-            var contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>";
-
-            var infowindow = new google.maps.InfoWindow({
-                content: contentString,
+            marker.contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>" + "<p><a onclick='resolveInc(" + hash + ")'>Update and Resolve</a></p>";
+            var iw = new google.maps.InfoWindow({
+                content: marker.contentString,
                 position: coords
             });
+            iw.parent = marker;
+            marker.infoWindow = iw;
+
+            locArray[hash] = (marker);
+
+
 
             marker.addListener('click', function() {
-                infowindow.open(map);
+                iw.open(map);
             });
         });
     }
@@ -287,7 +293,7 @@
     {
         //alert(msg.data);
         var data = JSON.parse(msg.data);
-        putZone(data.description, data.location, data.status);
+        putZone(data.description, data.location, data.status, data.hash);
 
     };
 
@@ -295,7 +301,25 @@
     {
         //alert(msg.data);
         var data = JSON.parse(msg.data);
-        putMarker(data.description, data.location, data.status);
+        putMarker(data.description, data.location, data.status, data.hash);
+    };
+
+
+    new RecvSocket("client_update_marker").onmessage = function(msg)
+    {
+        //alert(msg.data);
+        var data = JSON.parse(msg.data);
+        locArray[data.id].infoWindow.setContent("<h1>RESOLVED</h1>");
+        locArray[data.id].infoWindow.parent.setMap(null);
+        //putMarker(data.description, data.location, data.status, data.hash);
+    };
+
+    new RecvSocket("client_update_zone").onmessage = function(msg)
+    {
+        //alert(msg.data);
+        var data = JSON.parse(msg.data);
+        zoneArray[data.id].infoWindow.setContent("<h1>RESOLVED</h1>");
+        zoneArray[data.id].infoWindow.parent.setMap(null);
     };
 
 
@@ -311,12 +335,12 @@
             case "client_all_incidents":
                 var incidents = JSON.parse(data.allIncidents)[0];
                 for(var i = 0; i < incidents.length; i++)
-                    putMarker(incidents[i][1], incidents[i][2], incidents[i][4])
+                    putMarker(incidents[i][1], incidents[i][2], incidents[i][4], incidents[i][0])
                 break;
             case "client_all_hazards":
                 var hazards = JSON.parse(data.allHazards)[0];
                 for(var i = 0; i < hazards.length; i++)
-                    putZone(hazards[i][1], hazards[i][2], hazards[i][4])
+                    putZone(hazards[i][1], hazards[i][2], hazards[i][4], hazards[i][0])
                 break;
             default:
                 alert("Invalid targeted message received");
@@ -345,7 +369,14 @@
     }
 
 
-
+    function resolveHaz(id)
+    {
+        sendSocket.send("srv_update_hazard", JSON.stringify({id: id}))
+    }
+    function resolveInc(id)
+    {
+        sendSocket.send("srv_update_incident", JSON.stringify({id: id}))
+    }
 
     function submitHaz()
     {

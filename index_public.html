@@ -139,7 +139,7 @@
 
 
 
-    var locArray = [];
+    //var locArray = [];
     var zoneArray = [];
 
     var map;
@@ -179,8 +179,9 @@
         });
     }
 
-    function putZone(description, location, status)
+    function putZone(description, location, status, hash)
     {
+
         getAddressCoords(location, function(coords)
         {
             var cityCircle = new google.maps.Circle({
@@ -193,7 +194,7 @@
                 center: coords,
                 radius: 5000
             });
-            zoneArray.push(cityCircle);
+            zoneArray[hash] = (cityCircle);
 
             var contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>";
 
@@ -208,7 +209,7 @@
         });
     }
 
-    function putMarker(description, location, status)
+    function putMarker(description, location, status, hash)
     {
         getAddressCoords(location, function(coords)
         {
@@ -216,7 +217,7 @@
                 position: coords,
                 map: map
             });
-            zoneArray.push(marker);
+            zoneArray[hash] = (marker);
 
             var contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>";
 
@@ -292,7 +293,7 @@
         var datetime = document.getElementById("haz-dt").value;
         var status = document.getElementById("haz-stat").value;
 
-        sendSocket.send("srv_add_hazard", JSON.stringify({description: description, location: location, datetime: datetime, status: status}));
+        sendSocket.send("srv_add_hazard", JSON.stringify({description: description, location: location, datetime: datetime, status: status, hash: Math.random().toString(16)}));
     }
 
     function submitInc()
@@ -302,7 +303,7 @@
         var datetime = document.getElementById("inc-dt").value;
         var status = document.getElementById("inc-stat").value;
 
-        sendSocket.send("srv_add_incident", JSON.stringify({description: description, location: location, datetime: datetime, status: status}));
+        sendSocket.send("srv_add_incident", JSON.stringify({description: description, location: location, datetime: datetime, status: status, hash: Math.random().toString(16)}));
     }
 
 </script>
