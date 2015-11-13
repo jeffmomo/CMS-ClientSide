@@ -139,7 +139,7 @@
 
 
 
-    //var locArray = [];
+    var locArray = [];
     var zoneArray = [];
 
     var map;
@@ -194,17 +194,19 @@
                 center: coords,
                 radius: 5000
             });
-            zoneArray[hash] = (cityCircle);
+            cityCircle.contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>";
 
-            var contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>";
-
-            var infowindow = new google.maps.InfoWindow({
-                content: contentString,
+            var iw = new google.maps.InfoWindow({
+                content: cityCircle.contentString,
                 position: coords
             });
+            iw.parent = cityCircle;
+            cityCircle.infoWindow = iw;
+
+            zoneArray[hash] = (cityCircle);
 
             cityCircle.addListener('click', function() {
-                infowindow.open(map);
+                iw.open(map);
             });
         });
     }
@@ -217,17 +219,20 @@
                 position: coords,
                 map: map
             });
-            zoneArray[hash] = (marker);
-
-            var contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>";
-
-            var infowindow = new google.maps.InfoWindow({
-                content: contentString,
+            marker.contentString = "<h1>" + description + "</h1>" + "<p>Status: " + status + "</p>";
+            var iw = new google.maps.InfoWindow({
+                content: marker.contentString,
                 position: coords
             });
+            iw.parent = marker;
+            marker.infoWindow = iw;
+
+            locArray[hash] = (marker);
+
+
 
             marker.addListener('click', function() {
-                infowindow.open(map);
+                iw.open(map);
             });
         });
     }
@@ -236,9 +241,19 @@
     {
         //alert(msg.data);
         var data = JSON.parse(msg.data);
-        putZone(data.description, data.location, data.status);
+        putZone(data.description, data.location, data.status, data.hash);
 
     };
+
+
+    new RecvSocket("client_update_zone").onmessage = function(msg)
+    {
+        //alert(msg.data);
+        var data = JSON.parse(msg.data);
+        zoneArray[data.id].infoWindow.setContent("<h1>RESOLVED</h1>");
+        zoneArray[data.id].infoWindow.parent.setMap(null);
+    };
+
 
 
     // Handles targeted messages
@@ -250,12 +265,12 @@
         switch (data.apiType)
         {
             case "client_all_incidents":
-
+                
                 break;
             case "client_all_hazards":
                 var hazards = JSON.parse(data.allHazards)[0];
                 for(var i = 0; i < hazards.length; i++)
-                    putZone(hazards[i][1], hazards[i][2], hazards[i][4])
+                    putZone(hazards[i][1], hazards[i][2], hazards[i][4], hazards[i][0])
                 break;
             default:
                 alert("Invalid targeted message received");
@@ -283,28 +298,6 @@
         sendSocket.close();
     }
 
-
-
-
-    function submitHaz()
-    {
-        var description = document.getElementById("haz-desc").value;
-        var location = document.getElementById("haz-loc").value;
-        var datetime = document.getElementById("haz-dt").value;
-        var status = document.getElementById("haz-stat").value;
-
-        sendSocket.send("srv_add_hazard", JSON.stringify({description: description, location: location, datetime: datetime, status: status, hash: Math.random().toString(16)}));
-    }
-
-    function submitInc()
-    {
-        var description = document.getElementById("inc-desc").value;
-        var location = document.getElementById("inc-loc").value;
-        var datetime = document.getElementById("inc-dt").value;
-        var status = document.getElementById("inc-stat").value;
-
-        sendSocket.send("srv_add_incident", JSON.stringify({description: description, location: location, datetime: datetime, status: status, hash: Math.random().toString(16)}));
-    }
 
 </script>
 
